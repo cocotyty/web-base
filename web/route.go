@@ -1,52 +1,65 @@
 package web
 
 import (
-	"github.com/cocotyty/summer"
-	"github.com/kataras/iris"
 	"time"
-	"github.com/iris-contrib/middleware/recovery"
-	"github.com/kataras/iris/config"
-	"github.com/iris-contrib/template/html"
-	"github.com/iris-contrib/graceful"
+
+	"github.com/cocotyty/summer"
+
+	"github.com/kataras/iris"
+	"github.com/kataras/iris/context"
+	"github.com/kataras/iris/middleware/recover"
+	"github.com/kataras/iris/view"
 )
 
 func init() {
-	summer.Add("web",&Route{})
+	app := iris.New()
+	route := newRoute(app)
+	summer.Add("web", route)
 }
 
 type Route struct {
-	Debug  bool `sm:"#.debug"`
+	Debug  bool   `sm:"#.debug"`
 	Listen string `sm:"#.listen"`
+
+	app *iris.Application
 }
 
-func (r *Route)Init() {
-	if r.Debug {
-		config.StaticCacheDuration = 1 * time.Second
-	}
-	iris.Config.IsDevelopment = r.Debug
-	iris.Config.Gzip = !r.Debug
-	iris.UseTemplate(html.New(html.Config{
-		Left:        "$$",
-		Right:       "$$",
-		Layout:      "",
-		Funcs:       make(map[string]interface{}, 0),
-		LayoutFuncs: make(map[string]interface{}, 0),
-	}))
-	iris.Use(recovery.New(iris.Logger))
+func newRoute(app *iris.Application) *Route {
+	return &Router{app: app}
 }
-func (r *Route)Config() {
-	iris.Get("/", func(ctx *iris.Context) {
-		ctx.Render("index.html", "Hello World")
+
+func (r *Route) Init(app *iris.Application) {
+	if r.Debug {
+		context.StaticCacheDuration = 1 * time.Second
+	}
+
+	r.app.Use(recover.New())
+
+	if r.Debug {
+		r.app.UseGlobal(func(ctx context.Context) {
+			ctx.Gzip(true)
+			ctx.Next()
+		})
+	}
+
+	r.app.AttachView(view.HTML("./templates", ".html").Delims("$$"))
+}
+
+func (r *Route) Config() {
+	r.app.Get("/", func(ctx context.Context) {
+		ctx.ViewData("Message", "Hello World")
+		ctx.View("index.html")
 	})
 }
-func (r *Route)Ready() {
+func (r *Route) Ready() {
 	r.Config()
 }
 
-func (r *Route)Start() {
-	if r.Debug {
-		iris.Listen(r.Listen)
-	} else {
-		graceful.Run(r.Listen, 5 * time.Second, iris.Default)
-	}
+func (r *Route) Start() error {
+	//
+	// TODO: load configuration from the existing
+	// toml files at ./conf.
+	// Read more here: https://github.com/kataras/iris/blob/master/_examples/beginner/configuration/from-toml-file
+	//
+	return r.app.Run(iris.Addr(r.Listen)) // gracefully shutdowns by-default now
 }

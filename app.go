@@ -1,10 +1,11 @@
 package main
 
 import (
-	_ "github.com/cocotyty/web-base/provider"
-	"github.com/cocotyty/summer"
-	"github.com/cocotyty/web-base/web"
 	"os"
+
+	"github.com/cocotyty/summer"
+	_ "github.com/cocotyty/web-base/provider"
+	"github.com/cocotyty/web-base/web"
 )
 
 func main() {
@@ -12,7 +13,11 @@ func main() {
 	if mode == "" {
 		mode = "dev"
 	}
+
 	summer.TomlFile("./conf/" + mode + ".toml")
 	summer.Start()
-	summer.GetStoneWithName("web").(*web.Route).Start()
+
+	if err := summer.GetStoneWithName("web").(*web.Route).Start(); err != nil {
+		panic(err)
+	}
 }

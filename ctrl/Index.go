@@ -1,18 +1,19 @@
 package ctrl
 
 import (
-	"github.com/kataras/iris"
-	"github.com/jmoiron/sqlx"
 	"github.com/cocotyty/summer"
+	"github.com/jmoiron/sqlx"
+	"github.com/kataras/iris/context"
 )
 
 type Index struct {
 	DB *sqlx.DB `sm:"@.*"`
 }
 
-func (i *Index)Index(ctx *iris.Context) {
-	ctx.JSON(200, iris.Map{"ctr", "llo"})
+func (i *Index) Index(ctx context.Context) {
+	ctx.JSON(context.Map{"ctr", "llo"})
 }
+
 func init() {
 	summer.Put(&Index{})
 }
