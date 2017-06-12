@@ -1,8 +1,8 @@
 package provider
 
 import (
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/cocotyty/summer"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -11,10 +11,11 @@ type DBProvider struct {
 	Address string `sm:"#db.url"`
 }
 
-func (d *DBProvider)Init() {
+func (d *DBProvider) Init() {
 	d.DB = sqlx.MustOpen("mysql", d.Address)
 }
-func (d *DBProvider)Provider() interface{} {
+
+func (d *DBProvider) Provider() interface{} {
 	return d.DB
 }
 
